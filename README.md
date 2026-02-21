@@ -1,4 +1,4 @@
-# Wave-Packet Traveler
+# Easy-Q
 
 A quantum edtech RPG built with React, TypeScript, and Three.js. You play as a wave packet in a world governed by quantum mechanics — spread (H), flip (X), shift phase (Z), and observe (M) to learn superposition, interference, and measurement.
 
@@ -59,3 +59,4 @@ npm run preview   # Preview production build
 
 All UI text and dialogue are in English. The game is suitable for delivery as a standalone web app.
 >>>>>>> 7b4eaf4 (initial commit)
+
