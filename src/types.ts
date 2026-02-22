@@ -19,8 +19,9 @@ export interface BlochState {
   isSuperposition: boolean;
 }
 
-export type GamePhase = "title" | "playing" | "complete";
-export type Stage = "prologue" | "awakening" | "doubleSlit" | "complete";
+export type GamePhase = "title" | "playing" | "quiz" | "complete";
+export type Stage = "prologue" | "bitLesson" | "awakening" | "doubleSlit" | "complete";
+export type LevelMode = "beginner" | "intermediate" | "advanced";
 
 export interface DialogueLine {
   speaker: string;
@@ -33,3 +34,23 @@ export interface XpGain {
 }
 
 export type GateKey = "H" | "X" | "Z";
+
+export interface QuizQuestion {
+  question: string;
+  options: [string, string, string, string];
+  correct: 0 | 1 | 2 | 3;
+  explanation: string;
+}
+
+export interface QuizResult {
+  questionIndex: number;
+  selected: number;
+  correct: boolean;
+}
+
+export interface Achievement {
+  title: string;
+  badge: string;
+  description: string;
+  minScore: number;
+}

@@ -4,6 +4,10 @@
   padding: 0;
 }
 
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @keyframes blink {
   0%,
   100% {
@@ -57,5 +61,68 @@
   }
   75% {
     transform: translateY(-20px) translateX(3px);
+  }
+}
+
+@keyframes blochFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes hint-bounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+
+@keyframes hint-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px currentColor, 0 0 12px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 5px currentColor, 0 0 25px currentColor;
+  }
+}
+
+@keyframes sphere-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(77, 232, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(77, 232, 255, 0.5), 0 0 40px rgba(77, 232, 255, 0.3);
+  }
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes classicalError {
+  0%,
+  100% {
+    border-color: #ff4d6a88;
+  }
+  50% {
+    border-color: #ff4d6a;
+    box-shadow: 0 0 12px #ff4d6a55;
   }
 }
