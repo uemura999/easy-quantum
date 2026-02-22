@@ -6,6 +6,7 @@ import type { QuantumState } from "../types";
 interface BitComparePanelProps {
   quantumState: QuantumState;
   step: 0 | 1 | 2 | 3;
+  inline?: boolean;
 }
 
 const STEPS = [
@@ -15,7 +16,7 @@ const STEPS = [
   { label: "✓ Complete!" },
 ];
 
-export function BitComparePanel({ quantumState, step }: BitComparePanelProps) {
+export function BitComparePanel({ quantumState, step, inline = false }: BitComparePanelProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
 
@@ -29,6 +30,42 @@ export function BitComparePanel({ quantumState, step }: BitComparePanelProps) {
     : b.p0 > 0.95
       ? "0"
       : "1";
+
+  // Inline mode: render card inline (used in mobile Zone B)
+  if (inline) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          background: "rgba(8,16,32,0.88)",
+          border: "1px solid rgba(77,232,255,0.2)",
+          borderRadius: 12,
+          padding: "12px",
+          marginBottom: 8,
+          fontFamily: "monospace",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 9,
+            color: "#4de8ff",
+            letterSpacing: 1.5,
+            marginBottom: 10,
+          }}
+        >
+          Classical Bit vs Qubit
+        </div>
+        <BitComparePanelContent
+          classicalLabel={classicalLabel}
+          classicalIsError={classicalIsError}
+          stateLabel={stateLabel}
+          b={b}
+          step={step}
+        />
+      </div>
+    );
+  }
 
   // Mobile collapsed: pill badge
   if (isMobile && !expanded) {

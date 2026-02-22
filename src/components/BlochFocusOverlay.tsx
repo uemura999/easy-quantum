@@ -7,6 +7,7 @@ interface BlochFocusOverlayProps {
   quantumState: QuantumState;
   onDismiss: () => void;
   stage?: Stage;
+  inline?: boolean;
 }
 
 export function BlochFocusOverlay({
@@ -14,6 +15,7 @@ export function BlochFocusOverlay({
   quantumState,
   onDismiss,
   stage,
+  inline = false,
 }: BlochFocusOverlayProps) {
   const isMobile = useIsMobile();
 
@@ -31,9 +33,9 @@ export function BlochFocusOverlay({
       ? "State 0 (Ground)"
       : "State 1 (Excited)";
 
-  // Axis diagram sizing (smaller than before)
+  // Axis diagram sizing (smaller on mobile fixed overlay, normal when inline)
   const svgW = 60;
-  const svgH = 120;
+  const svgH = isMobile && !inline ? 80 : 120;
   const axisX = svgW / 2;
   const topY = 14;
   const botY = svgH - 14;
@@ -48,12 +50,22 @@ export function BlochFocusOverlay({
 
   return (
     <div
-      style={{
+      style={inline ? {
+        position: "relative",
+        width: "100%",
+        marginBottom: 8,
+        background: "rgba(2, 6, 14, 0.82)",
+        border: "1px solid rgba(77,232,255,0.25)",
+        borderRadius: 12,
+        padding: "10px 12px",
+        fontFamily: "monospace",
+        boxSizing: "border-box",
+      } : {
         position: "fixed",
-        top: isMobile ? "50%" : isOnBitLesson ? 165 : 80,
-        left: isMobile ? "50%" : isOnBitLesson ? "auto" : 16,
-        right: isMobile ? "auto" : isOnBitLesson ? 12 : "auto",
-        transform: isMobile ? "translate(-50%, -50%)" : "none",
+        top: isMobile ? 68 : isOnBitLesson ? 165 : 80,
+        left: isMobile ? "auto" : isOnBitLesson ? "auto" : 16,
+        right: isMobile ? 8 : isOnBitLesson ? 12 : "auto",
+        transform: "none",
         zIndex: 20,
         width: isMobile ? "min(172px, calc(100vw - 32px))" : 172,
         background: "rgba(2, 6, 14, 0.82)",

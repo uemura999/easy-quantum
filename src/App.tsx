@@ -27,6 +27,7 @@ import {
   QuizScreen,
   QuizReviewScreen,
 } from "./components";
+import { useIsMobile } from "./hooks/useIsMobile";
 import type { GamePhase, Stage, QuantumState, GateKey, LevelMode, QuizResult } from "./types";
 import type { XpGain } from "./types";
 
@@ -37,6 +38,7 @@ declare global {
 }
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [gamePhase, setGamePhase] = useState<GamePhase>("title");
   const [stage, setStage] = useState<Stage>("prologue");
   const [quantumState, setQuantumState] = useState<QuantumState>(INITIAL_STATE);
@@ -328,39 +330,52 @@ export default function App() {
         fontFamily: "'Space Grotesk', sans-serif",
       }}
     >
-      <QuantumWorld
-        quantumState={quantumState}
-        stage={stage}
-        waveExpanded={waveExpanded}
-        collapseFlash={collapseFlash}
-        slitPhase={slitPhase}
-        gateFlash={gateFlash}
-        cameraFocusBloch={sphereSpotlight}
-      />
-
-      {gamePhase === "title" && <TitleScreen onStart={startGame} />}
-
-      {gamePhase === "playing" && (
+      {/* ─── Mobile playing: 2-zone layout ─── */}
+      {isMobile && gamePhase === "playing" ? (
         <>
-          <BlochFocusOverlay
-            active={sphereSpotlight}
-            quantumState={quantumState}
-            onDismiss={() => setSphereSpotlight(false)}
-            stage={stage}
-          />
-          {stage === "bitLesson" && (
-            <BitComparePanel quantumState={quantumState} step={bitLessonStep} />
-          )}
-          {(stage === "awakening" || stage === "doubleSlit") && (
-            <StageProgress stage={stage} step={stageStep} />
-          )}
+          {/* Zone A: 3D scene (top 50dvh) */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "50dvh", overflow: "hidden" }}>
+            <QuantumWorld
+              quantumState={quantumState}
+              stage={stage}
+              waveExpanded={waveExpanded}
+              collapseFlash={collapseFlash}
+              slitPhase={slitPhase}
+              gateFlash={gateFlash}
+              cameraFocusBloch={sphereSpotlight}
+            />
+            <StatusPanel quantumState={quantumState} xp={xp} stage={stage} />
+            <StageIndicator stage={stage} />
+            <XpPopup xpGains={xpGains} />
+          </div>
+
+          {/* Zone B: scrollable info panels (bottom 50dvh) */}
+          <div style={{
+            position: "absolute",
+            top: "50dvh",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflowY: "auto",
+            background: "rgba(2,6,14,0.96)",
+            zIndex: 10,
+          }}>
+            <div style={{ padding: "8px 12px", paddingBottom: 92 }}>
+              {(stage === "awakening" || stage === "doubleSlit") && (
+                <StageProgress stage={stage} step={stageStep} inline />
+              )}
+              <DialogueBox
+                messages={dialogueQueue}
+                currentIndex={dialogueIndex}
+                onAdvance={advanceDialogue}
+                visible={showDialogue}
+                inline
+              />
+            </div>
+          </div>
+
+          {/* Fixed bottom: skill controls */}
           <GateHintOverlay hintGate={hintGate} />
-          <StatusPanel
-            quantumState={quantumState}
-            xp={xp}
-            stage={stage}
-            spotlight={sphereSpotlight}
-          />
           <SkillBar
             onGate={handleGate}
             onMeasure={handleMeasure}
@@ -368,34 +383,80 @@ export default function App() {
             stage={stage}
             hintGate={hintGate}
           />
-          <DialogueBox
-            messages={dialogueQueue}
-            currentIndex={dialogueIndex}
-            onAdvance={advanceDialogue}
-            visible={showDialogue}
-          />
-          <XpPopup xpGains={xpGains} />
-          <StageIndicator stage={stage} />
         </>
-      )}
+      ) : (
+        /* ─── Desktop / non-playing: existing layout ─── */
+        <>
+          <QuantumWorld
+            quantumState={quantumState}
+            stage={stage}
+            waveExpanded={waveExpanded}
+            collapseFlash={collapseFlash}
+            slitPhase={slitPhase}
+            gateFlash={gateFlash}
+            cameraFocusBloch={sphereSpotlight}
+          />
 
-      {gamePhase === "quiz" && (
-        <QuizScreen
-          mode={levelMode}
-          onComplete={(results) => {
-            setQuizResults(results);
-            setGamePhase("complete");
-          }}
-        />
-      )}
+          {gamePhase === "title" && <TitleScreen onStart={startGame} />}
 
-      {gamePhase === "complete" && (
-        <QuizReviewScreen
-          mode={levelMode}
-          xp={xp}
-          results={quizResults}
-          onRestart={handleRestart}
-        />
+          {gamePhase === "playing" && (
+            <>
+              <BlochFocusOverlay
+                active={sphereSpotlight}
+                quantumState={quantumState}
+                onDismiss={() => setSphereSpotlight(false)}
+                stage={stage}
+              />
+              {stage === "bitLesson" && (
+                <BitComparePanel quantumState={quantumState} step={bitLessonStep} />
+              )}
+              {(stage === "awakening" || stage === "doubleSlit") && (
+                <StageProgress stage={stage} step={stageStep} />
+              )}
+              <GateHintOverlay hintGate={hintGate} />
+              <StatusPanel
+                quantumState={quantumState}
+                xp={xp}
+                stage={stage}
+                spotlight={sphereSpotlight}
+              />
+              <SkillBar
+                onGate={handleGate}
+                onMeasure={handleMeasure}
+                unlockedGates={unlockedGates}
+                stage={stage}
+                hintGate={hintGate}
+              />
+              <DialogueBox
+                messages={dialogueQueue}
+                currentIndex={dialogueIndex}
+                onAdvance={advanceDialogue}
+                visible={showDialogue}
+              />
+              <XpPopup xpGains={xpGains} />
+              <StageIndicator stage={stage} />
+            </>
+          )}
+
+          {gamePhase === "quiz" && (
+            <QuizScreen
+              mode={levelMode}
+              onComplete={(results) => {
+                setQuizResults(results);
+                setGamePhase("complete");
+              }}
+            />
+          )}
+
+          {gamePhase === "complete" && (
+            <QuizReviewScreen
+              mode={levelMode}
+              xp={xp}
+              results={quizResults}
+              onRestart={handleRestart}
+            />
+          )}
+        </>
       )}
     </div>
   );
