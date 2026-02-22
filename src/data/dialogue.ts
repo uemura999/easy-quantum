@@ -2,6 +2,56 @@ import type { DialogueLine } from "../types";
 
 export const GUIDE_PORTRAIT = "🧒";
 
+export const BEGINNER_PROLOGUE: DialogueLine[] = [
+  { speaker: "Chen", text: "Hey! I'm Chen — welcome to the Quantum World!" },
+  { speaker: "Chen", text: "Before we dive in, let me tell you something important..." },
+  { speaker: "Chen", text: "The rules you know from everyday life? They don't apply here." },
+  { speaker: "Chen", text: "Here, things can be in two places at once. Nothing is certain until you look." },
+  { speaker: "Chen", text: "Look at that glowing ball in the center — that's YOU, a quantum bit (qubit)!" },
+  { speaker: "Chen", text: "It glows blue → you're in State '0'. Like a light switch in the OFF position. It'll turn purple when you're in BOTH states at once!" },
+  { speaker: "Chen", text: "But don't worry — we'll start with the basics." },
+  { speaker: "Chen", text: "You've heard of computer bits, right? 0 or 1, like a light switch." },
+  { speaker: "Chen", text: "Well, you're not a regular bit. You're a quantum bit — a qubit." },
+  { speaker: "Chen", text: "And a qubit can do something no light switch ever could..." },
+  { speaker: "Chen", text: "Let's find out together. Welcome to Intro Mode: Bit vs Qubit!" },
+];
+
+export const BEGINNER_STAGE_DIALOGUE = {
+  bitLesson: {
+    intro: [
+      { speaker: "Chen", text: "See that arrow on the Status Panel (top-right)? Pointing straight UP = you're a '0'." },
+      { speaker: "Chen", text: "Just like a regular computer bit sitting in the 0 position. Pretty normal, right?" },
+      { speaker: "Chen", text: "But now — try the H skill. Press [H] or click the H button below." },
+      { speaker: "Chen", text: "Something amazing is about to happen..." },
+    ],
+    onH: [
+      { speaker: "Chen", text: "WHOA! Did you see that? The arrow moved to the side — you're in superposition!" },
+      { speaker: "Chen", text: "You are now BOTH 0 and 1 at the same time. Not 0, not 1 — both!" },
+      { speaker: "Chen", text: "A regular light switch can only be OFF or ON. But you? You're OFF and ON simultaneously." },
+      { speaker: "Chen", text: "This is called 'superposition' — the #1 quantum superpower." },
+      { speaker: "Chen", text: "Now press [M] (Observe) to see what happens when someone looks at you..." },
+    ],
+    onMeasure: [
+      { speaker: "Chen", text: "BAM! You instantly snapped to either 0 or 1!" },
+      { speaker: "Chen", text: "That's called 'measurement' or 'wave function collapse.'" },
+      { speaker: "Chen", text: "While no one was looking, you were BOTH. The moment you were observed — you picked one side." },
+      { speaker: "Chen", text: "Classical bit: always 0 OR 1. Qubit: 0 AND 1... until measured!" },
+      { speaker: "Chen", text: "You now understand the core of quantum computing. That's incredible for day one!" },
+    ],
+    onMeasureCollapsed: [
+      { speaker: "Chen", text: "You observed a collapsed state — just like a regular bit!" },
+      { speaker: "Chen", text: "Try pressing [H] first to spread into superposition. Then press [M] to see the real magic!" },
+    ],
+  },
+} as const;
+
+export const ADVANCED_PROLOGUE: DialogueLine[] = [
+  { speaker: "Chen", text: "Hey, you're back. I'm Chen." },
+  { speaker: "Chen", text: "I'll skip the basics — you already know superposition, phase, and bit flip." },
+  { speaker: "Chen", text: "Today's challenge: the Double Slit Wall. This is where quantum mechanics gets truly wild." },
+  { speaker: "Chen", text: "Gates unlocked. The wall is straight ahead. Good luck." },
+];
+
 export const PROLOGUE: DialogueLine[] = [
   { speaker: "Chen", text: "Hey, over here! I'm Chen — your guide in this world." },
   { speaker: "Chen", text: "The world you're about to explore is nothing like the one we usually live in." },

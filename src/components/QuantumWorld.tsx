@@ -57,6 +57,8 @@ interface QuantumWorldProps {
   waveExpanded: boolean;
   collapseFlash: number;
   slitPhase: number;
+  gateFlash: { gate: string; id: number } | null;
+  cameraFocusBloch?: boolean;
 }
 
 interface SceneRef {
@@ -75,6 +77,11 @@ interface SceneRef {
   coreGlow: THREE.Mesh;
   arrowGroup: THREE.Group;
   wallGroup: THREE.Group;
+  blochInnerGlow: THREE.Mesh;
+  blochWire: THREE.Mesh;
+  northHalo: THREE.Mesh;
+  southHalo: THREE.Mesh;
+  eqHalo: THREE.Mesh;
 }
 
 function makeTextSprite(text: string, pos: [number, number, number], color: string): THREE.Sprite {
@@ -99,20 +106,28 @@ export function QuantumWorld({
   waveExpanded,
   collapseFlash,
   slitPhase,
+  gateFlash,
+  cameraFocusBloch,
 }: QuantumWorldProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<Partial<SceneRef>>({});
+  const cameraFocusRef = useRef(false);
   const stateRef = useRef({
     quantumState,
     stage,
     waveExpanded,
     collapseFlash,
     slitPhase,
+    gateFlash,
   });
 
   useEffect(() => {
-    stateRef.current = { quantumState, stage, waveExpanded, collapseFlash, slitPhase };
+    stateRef.current = { quantumState, stage, waveExpanded, collapseFlash, slitPhase, gateFlash };
   });
+
+  useEffect(() => {
+    cameraFocusRef.current = cameraFocusBloch ?? false;
+  }, [cameraFocusBloch]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -205,39 +220,138 @@ export function QuantumWorld({
     coreGlow.position.y = 0.5;
     scene.add(coreGlow);
 
+    // Bloch sphere group
     const bGroup = new THREE.Group();
     bGroup.position.set(7, 6, -4);
+
+    // Outer sphere — larger, darker, more transparent
     const bSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.2, 32, 32),
+      new THREE.SphereGeometry(1.8, 32, 32),
       new THREE.MeshPhysicalMaterial({
-        color: 0x0a1628,
+        color: 0x050d1f,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.25,
         roughness: 0.2,
         metalness: 0.1,
         side: THREE.DoubleSide,
       })
     );
     bGroup.add(bSphere);
-    const bWire = new THREE.Mesh(
-      new THREE.SphereGeometry(1.21, 16, 16),
+
+    // Wireframe — brighter and more visible
+    const blochWire = new THREE.Mesh(
+      new THREE.SphereGeometry(1.82, 16, 16),
       new THREE.MeshBasicMaterial({
-        color: 0x1a3a5c,
+        color: 0x2a7ab0,
         wireframe: true,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.45,
       })
     );
-    bGroup.add(bWire);
-    const eqGeo = new THREE.TorusGeometry(1.2, 0.01, 16, 64);
+    bGroup.add(blochWire);
+
+    // Equatorial torus — thicker, more opaque
+    const eqGeo = new THREE.TorusGeometry(1.8, 0.015, 16, 64);
     const eqMat = new THREE.MeshBasicMaterial({
       color: 0x4de8ff,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.55,
     });
     const eq = new THREE.Mesh(eqGeo, eqMat);
     eq.rotation.x = Math.PI / 2;
     bGroup.add(eq);
+
+    // Inner glow sphere — shows quantum state via color
+    const blochInnerGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(1.0, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: 0xa855f7,
+        transparent: true,
+        opacity: 0.15,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    bGroup.add(blochInnerGlow);
+
+    // Z-axis line (vertical, white)
+    const zAxisMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const zAxisGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -1.8, 0),
+      new THREE.Vector3(0, 1.8, 0),
+    ]);
+    const zAxisLine = new THREE.Line(zAxisGeo, zAxisMat);
+    bGroup.add(zAxisLine);
+
+    // Upper pole marker (|0⟩ = north pole)
+    const upperPole = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x4de8ff })
+    );
+    upperPole.position.y = 1.8;
+    bGroup.add(upperPole);
+
+    // Lower pole marker (|1⟩ = south pole)
+    const lowerPole = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xff4d6a })
+    );
+    lowerPole.position.y = -1.8;
+    bGroup.add(lowerPole);
+
+    // Pole labels — hidden when sphere enlarged (Bit vs Qubit); overlay shows 0/1 instead
+    const poleLabel0 = makeTextSprite("0", [0, 2.3, 0], "#4de8ff");
+    const poleLabel1 = makeTextSprite("1", [0, -2.3, 0], "#ff4d6a");
+    bGroup.add(poleLabel0);
+    bGroup.add(poleLabel1);
+
+    // North pole halo (State 0)
+    const northHalo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.25, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0x4de8ff,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    northHalo.position.y = 1.8;
+    bGroup.add(northHalo);
+
+    // South pole halo (State 1)
+    const southHalo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.25, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xff4d6a,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    southHalo.position.y = -1.8;
+    bGroup.add(southHalo);
+
+    // Equator halo torus (Superposition)
+    const eqHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(1.8, 0.08, 8, 48),
+      new THREE.MeshBasicMaterial({
+        color: 0xa855f7,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    eqHalo.rotation.x = Math.PI / 2;
+    bGroup.add(eqHalo);
+
+    // Bloch sphere arrow
     const arrowGroup = new THREE.Group();
     const shaft = new THREE.Mesh(
       new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8),
@@ -309,8 +423,6 @@ export function QuantumWorld({
     wallGroup.add(safeZone);
     wallGroup.add(makeTextSprite("⚠ DEATH ZONE", [0, 3.5, -14], "#ff4466"));
     wallGroup.add(makeTextSprite("✦ ENERGY SPRING", [5, 3.5, -14], "#4dff91"));
-    wallGroup.add(makeTextSprite("|0⟩", [7.5, 7.4, -4], "#4de8ff"));
-    wallGroup.add(makeTextSprite("|1⟩", [7.5, 4.6, -4], "#ff4d6a"));
     scene.add(wallGroup);
 
     const starGeo = new THREE.BufferGeometry();
@@ -344,6 +456,11 @@ export function QuantumWorld({
       coreGlow,
       arrowGroup,
       wallGroup,
+      blochInnerGlow,
+      blochWire,
+      northHalo,
+      southHalo,
+      eqHalo,
     };
 
     let time = 0;
@@ -354,12 +471,36 @@ export function QuantumWorld({
     let targetExpand = 0;
     let targetPhase = 0;
 
+    // Gate flash tracking
+    let lastGateFlashId = -1;
+    let gateFlashAnim = 0;
+    let gateFlashType = "";
+
+    // Core hue smooth transition
+    let currentCoreHue = 0.55;
+
+    // Bloch sphere cinematic focus animation
+    let blochFocusAnim = 0;  // 0.0 = corner position, 1.0 = center zoom
+    let blochRotY = 0;       // cumulative self-rotation angle
+
     const animate = () => {
       const id = requestAnimationFrame(animate);
       (sceneRef.current as SceneRef).animId = id;
       time += 0.016;
       const st = stateRef.current;
       const b = bloch(st.quantumState);
+
+      // Smooth 0↔1 transition for cinematic focus
+      const targetBloch = cameraFocusRef.current ? 1 : 0;
+      blochFocusAnim += (targetBloch - blochFocusAnim) * 0.04;
+
+      // Gate flash detection
+      if (st.gateFlash && st.gateFlash.id !== lastGateFlashId) {
+        lastGateFlashId = st.gateFlash.id;
+        gateFlashAnim = 1.0;
+        gateFlashType = st.gateFlash.gate;
+      }
+      gateFlashAnim *= 0.90;
 
       targetExpand = st.waveExpanded ? 1 : 0;
       targetPhase = b.phi / Math.PI;
@@ -421,22 +562,96 @@ export function QuantumWorld({
       pGeo.attributes.position!.needsUpdate = true;
       pGeo.attributes.color!.needsUpdate = true;
 
-      coreGlow.scale.setScalar(1 - expandAnim * 0.7 + 0.3);
-      (coreGlow.material as THREE.MeshBasicMaterial).opacity =
-        (1 - expandAnim * 0.5) * 0.6;
-      const coreHue = Math.sin(time * 2) * 0.5 + 0.5;
+      // coreGlow — state-based color with smooth hue transition
+      const targetHue = b.z > 0.7 ? 0.55 : b.z < -0.7 ? 0.0 : 0.75;
+      currentCoreHue += (targetHue - currentCoreHue) * 0.05;
+
+      let coreScale = 1 - expandAnim * 0.7 + 0.3;
+      let coreOpacity = (1 - expandAnim * 0.5) * 0.6;
+      let coreHue = currentCoreHue;
+      let coreSaturation = 0.8;
+      let coreLightness = 0.6;
+
+      if (gateFlashType === "X" && gateFlashAnim > 0.01) {
+        // X gate: big pulse, flash toward white
+        coreScale = (1 - expandAnim * 0.7 + 0.3) + gateFlashAnim * 3.0;
+        coreSaturation = 0.8 - gateFlashAnim * 0.8;
+        coreLightness = 0.6 + gateFlashAnim * 0.4;
+        coreOpacity = Math.min(1, (1 - expandAnim * 0.5) * 0.6 + gateFlashAnim * 0.4);
+      } else if (gateFlashType === "Z" && gateFlashAnim > 0.01) {
+        // Z gate: hue shift flash + opacity boost
+        coreHue = currentCoreHue + gateFlashAnim * 0.5;
+        coreOpacity = Math.min(1, (1 - expandAnim * 0.5) * 0.6 + gateFlashAnim * 0.4);
+      } else if (gateFlashType === "H" && gateFlashAnim > 0.01) {
+        // H gate: burst
+        coreScale = (1 - expandAnim * 0.7 + 0.3) + gateFlashAnim * 1.5;
+      }
+
+      coreGlow.scale.setScalar(coreScale);
+      (coreGlow.material as THREE.MeshBasicMaterial).opacity = coreOpacity;
       (coreGlow.material as THREE.MeshBasicMaterial).color.setHSL(
-        0.55 + coreHue * 0.1,
-        0.8,
-        0.6
+        coreHue,
+        coreSaturation,
+        coreLightness
       );
 
+      // Bloch inner glow — color tracks quantum state
+      const innerMat = blochInnerGlow.material as THREE.MeshBasicMaterial;
+      const innerHue = b.z > 0.1 ? 0.55 : b.z < -0.1 ? 0.0 : 0.75;
+      innerMat.color.setHSL(innerHue, 0.9, 0.5 + gateFlashAnim * 0.3);
+      const innerOpacityBase = 0.15 + Math.abs(b.z) * 0.2 + gateFlashAnim * 0.3;
+      const focusPulse = 0.5 + Math.sin(time * 2.5) * 0.2;
+      innerMat.opacity = blochFocusAnim > 0.05
+        ? (innerOpacityBase * (1 - blochFocusAnim) + focusPulse * blochFocusAnim)
+        : innerOpacityBase;
+
+      // Arrow — snaps faster during gate flash
       const dir = new THREE.Vector3(b.x, b.z, -b.y).normalize();
       const up = new THREE.Vector3(0, 1, 0);
       const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
-      arrowGroup.quaternion.slerp(quat, 0.08);
+      arrowGroup.quaternion.slerp(quat, 0.08 + gateFlashAnim * 0.17);
 
-      camera.position.y = 8 + Math.sin(time * 0.5) * 0.3;
+      // bGroup cinematic: corner(7,6,-4) → center(0,2,0), scale 1x → 2x, self-rotate
+      bGroup.position.set(
+        7  * (1 - blochFocusAnim),
+        5.2 * (1 - blochFocusAnim) + 1.2 * blochFocusAnim,
+        -4 * (1 - blochFocusAnim)
+      );
+      bGroup.scale.setScalar(1 + blochFocusAnim * 1.2);
+      blochRotY += cameraFocusRef.current ? 0.005 : 0;
+      bGroup.rotation.y = blochRotY;
+
+      // Hide 3D pole labels when enlarged so they don't overflow; overlay shows 0/1 clearly
+      const showPoleLabels = blochFocusAnim < 0.5;
+      poleLabel0.visible = showPoleLabels;
+      poleLabel1.visible = showPoleLabels;
+
+      // Wireframe brightens when focused
+      (blochWire.material as THREE.MeshBasicMaterial).opacity =
+        0.45 + blochFocusAnim * 0.4;
+
+      // Halo opacity based on quantum state
+      const bState = bloch(stateRef.current.quantumState);
+      const pulse = 0.5 + 0.5 * Math.abs(Math.sin(time * 3));
+      (northHalo.material as THREE.MeshBasicMaterial).opacity =
+        bState.p0 > 0.9 ? 0.7 * pulse : 0.08;
+      (southHalo.material as THREE.MeshBasicMaterial).opacity =
+        bState.p1 > 0.9 ? 0.7 * pulse : 0.08;
+      (eqHalo.material as THREE.MeshBasicMaterial).opacity =
+        bState.isSuperposition ? 0.5 * pulse : 0.08;
+
+      // Camera: dramatic zoom following the focus animation
+      if (blochFocusAnim > 0.01 || cameraFocusRef.current) {
+        const camZ = 18 - blochFocusAnim * 9;
+        const camY = 8  - blochFocusAnim * 6;
+        camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.04);
+        const lookY = blochFocusAnim * 2;
+        camera.lookAt(0, lookY, 0);
+      } else {
+        const ty = 8 + Math.sin(time * 0.5) * 0.3;
+        camera.position.lerp(new THREE.Vector3(0, ty, 18), 0.03);
+        camera.lookAt(0, 0, 0);
+      }
 
       renderer.render(scene, camera);
     };

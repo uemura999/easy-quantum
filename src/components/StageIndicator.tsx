@@ -5,11 +5,16 @@ interface StageIndicatorProps {
 }
 
 export function StageIndicator({ stage }: StageIndicatorProps) {
-  if (stage === "prologue") return null;
+  if (stage === "prologue" || stage === "complete") return null;
 
-  const label =
-    stage === "awakening" ? "Awakening Chamber" : "Double Slit Wall";
-  const world = stage === "awakening" ? "WORLD 1" : "WORLD 2";
+  const config: Record<string, { world: string; label: string }> = {
+    bitLesson:  { world: "INTRO",   label: "Bit vs Qubit" },
+    awakening:  { world: "WORLD 1", label: "Awakening Chamber" },
+    doubleSlit: { world: "WORLD 2", label: "Double Slit Wall" },
+  };
+
+  const c = config[stage];
+  if (!c) return null;
 
   return (
     <div
@@ -33,7 +38,7 @@ export function StageIndicator({ stage }: StageIndicatorProps) {
           letterSpacing: 1,
         }}
       >
-        {world}
+        {c.world}
       </div>
       <div
         style={{
@@ -43,7 +48,7 @@ export function StageIndicator({ stage }: StageIndicatorProps) {
           fontFamily: "'Space Grotesk', sans-serif",
         }}
       >
-        {label}
+        {c.label}
       </div>
     </div>
   );
