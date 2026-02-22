@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { LevelMode } from "../types";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 interface TitleScreenProps {
   onStart: (mode: LevelMode) => void;
@@ -7,6 +8,7 @@ interface TitleScreenProps {
 
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [view, setView] = useState<"title" | "select">("title");
+  const isMobile = useIsMobile();
 
   const particles = Array.from({ length: 30 }).map((_, i) => ({
     key: i,
@@ -28,7 +30,8 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: isMobile && view === "select" ? "flex-start" : "center",
+        overflowY: "auto",
       }}
     >
       {/* Particle background */}
@@ -86,7 +89,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               lineHeight: 1.3,
             }}
           >
-            Easy-Q
+            Q-Villager
           </h1>
           <p
             style={{
@@ -171,7 +174,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
             zIndex: 1,
             width: "100%",
             maxWidth: 900,
-            padding: "0 24px",
+            padding: isMobile ? "24px 24px 40px" : "0 24px",
             boxSizing: "border-box",
           }}
         >
@@ -213,7 +216,9 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               display: "flex",
               gap: 16,
               justifyContent: "center",
-              flexWrap: "wrap",
+              flexDirection: isMobile ? "column" : "row",
+              flexWrap: isMobile ? "nowrap" : "wrap",
+              alignItems: isMobile ? "stretch" : undefined,
             }}
           >
             {/* Beginner card */}
@@ -223,6 +228,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               title="Bit vs Qubit"
               description="No prior knowledge needed. Learn the #1 difference between classical and quantum computers — with your own hands."
               onSelect={() => onStart("beginner")}
+              isMobile={isMobile}
             />
             {/* Post-Basics card */}
             <LevelCard
@@ -231,6 +237,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               title="Awakening — WORLD 1"
               description="You know the basics. Now put them to work. Master quantum gates: spread, flip, and phase."
               onSelect={() => onStart("intermediate")}
+              isMobile={isMobile}
             />
             {/* Advanced card */}
             <LevelCard
@@ -239,8 +246,11 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               title="Double Slit — WORLD 2"
               description="Jump straight into the famous double-slit experiment. Use quantum interference to navigate."
               onSelect={() => onStart("advanced")}
+              isMobile={isMobile}
             />
+            
           </div>
+          <div style={{ height: 28 }} />
         </div>
       )}
     </div>
@@ -253,14 +263,16 @@ interface LevelCardProps {
   title: string;
   description: string;
   onSelect: () => void;
+  isMobile?: boolean;
 }
 
-function LevelCard({ accentColor, badge, title, description, onSelect }: LevelCardProps) {
+function LevelCard({ accentColor, badge, title, description, onSelect, isMobile }: LevelCardProps) {
   return (
     <div
       style={{
-        flex: "1 1 240px",
-        maxWidth: 280,
+        flex: "1 1 auto",
+        maxWidth: isMobile ? undefined : 280,
+        width: isMobile ? "100%" : undefined,
         background: "rgba(10,20,40,0.85)",
         border: `1px solid ${accentColor}44`,
         borderRadius: 16,

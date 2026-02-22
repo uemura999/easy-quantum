@@ -134,6 +134,9 @@ export function QuantumWorld({
     if (!container) return;
     const w = container.clientWidth;
     const h = container.clientHeight;
+    const isMobileDevice = window.innerWidth < 768;
+    const bGroupInitX = isMobileDevice ? -4.0 : 7;
+    const bGroupInitY = isMobileDevice ? 2.0 : 6;
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x020810, 0.015);
@@ -222,7 +225,7 @@ export function QuantumWorld({
 
     // Bloch sphere group
     const bGroup = new THREE.Group();
-    bGroup.position.set(7, 6, -4);
+    bGroup.position.set(bGroupInitX, bGroupInitY, -4);
 
     // Outer sphere — larger, darker, more transparent
     const bSphere = new THREE.Mesh(
@@ -611,15 +614,29 @@ export function QuantumWorld({
       const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
       arrowGroup.quaternion.slerp(quat, 0.08 + gateFlashAnim * 0.17);
 
-      // bGroup cinematic: corner(7,6,-4) → center(0,2,0), scale 1x → 2x, self-rotate
-      bGroup.position.set(
-        7  * (1 - blochFocusAnim),
-        5.2 * (1 - blochFocusAnim) + 1.2 * blochFocusAnim,
-        -4 * (1 - blochFocusAnim)
-      );
-      bGroup.scale.setScalar(1 + blochFocusAnim * 1.2);
-      blochRotY += cameraFocusRef.current ? 0.005 : 0;
-      bGroup.rotation.y = blochRotY;
+      // bGroup: mobile = corner or center on focus, desktop = cinematic zoom
+      if (isMobileDevice) {
+        if (cameraFocusRef.current) {
+          bGroup.position.lerp(new THREE.Vector3(0, 1.0, -1.5), 0.05);
+          bGroup.scale.setScalar(2.0);
+        } else {
+          let mobileX = st.stage === "doubleSlit" ? -7.0 : bGroupInitX;
+          let mobileY = st.stage === "doubleSlit" ? bGroupInitY - 5.0 : bGroupInitY;
+          bGroup.position.set(mobileX, mobileY, -4);
+          bGroup.scale.setScalar(0.8);
+          bGroup.rotation.y = 0;
+        }
+      
+      } else {
+        bGroup.position.set(
+          7  * (1 - blochFocusAnim),
+          5.2 * (1 - blochFocusAnim) + 1.2 * blochFocusAnim,
+          -4 * (1 - blochFocusAnim)
+        );
+        bGroup.scale.setScalar(1 + blochFocusAnim * 1.2);
+        blochRotY += cameraFocusRef.current ? 0.005 : 0;
+        bGroup.rotation.y = blochRotY;
+      }
 
       // Hide 3D pole labels when enlarged so they don't overflow; overlay shows 0/1 clearly
       const showPoleLabels = blochFocusAnim < 0.5;
@@ -640,17 +657,19 @@ export function QuantumWorld({
       (eqHalo.material as THREE.MeshBasicMaterial).opacity =
         bState.isSuperposition ? 0.5 * pulse : 0.08;
 
-      // Camera: dramatic zoom following the focus animation
-      if (blochFocusAnim > 0.01 || cameraFocusRef.current) {
-        const camZ = 18 - blochFocusAnim * 9;
-        const camY = 8  - blochFocusAnim * 6;
-        camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.04);
-        const lookY = blochFocusAnim * 2;
-        camera.lookAt(0, lookY, 0);
-      } else {
-        const ty = 8 + Math.sin(time * 0.5) * 0.3;
-        camera.position.lerp(new THREE.Vector3(0, ty, 18), 0.03);
-        camera.lookAt(0, 0, 0);
+      // Camera: dramatic zoom on desktop only; mobile stays fixed
+      if (!isMobileDevice) {
+        if (blochFocusAnim > 0.01 || cameraFocusRef.current) {
+          const camZ = 18 - blochFocusAnim * 9;
+          const camY = 8  - blochFocusAnim * 6;
+          camera.position.lerp(new THREE.Vector3(0, camY, camZ), 0.04);
+          const lookY = blochFocusAnim * 2;
+          camera.lookAt(0, lookY, 0);
+        } else {
+          const ty = 8 + Math.sin(time * 0.5) * 0.3;
+          camera.position.lerp(new THREE.Vector3(0, ty, 18), 0.03);
+          camera.lookAt(0, 0, 0);
+        }
       }
 
       renderer.render(scene, camera);

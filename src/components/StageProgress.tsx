@@ -4,6 +4,7 @@ import type { Stage } from "../types";
 interface StageProgressProps {
   stage: Stage;
   step: number;
+  inline?: boolean;
 }
 
 const STAGE_STEPS: Record<string, string[]> = {
@@ -11,10 +12,65 @@ const STAGE_STEPS: Record<string, string[]> = {
   doubleSlit: ["H — Pass both slits", "Z — Flip phase", "✓ Clear!"],
 };
 
-export function StageProgress({ stage, step }: StageProgressProps) {
+export function StageProgress({ stage, step, inline = false }: StageProgressProps) {
   const isMobile = useIsMobile();
   const steps = STAGE_STEPS[stage];
   if (!steps) return null;
+
+  // Inline mode: pills inside Zone B
+  if (inline) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          marginBottom: 8,
+          display: "flex",
+          flexDirection: "row",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+          boxSizing: "border-box",
+        }}
+      >
+        {steps.map((label, i) => {
+          const isCurrent = i === step;
+          const isDone = i < step;
+          return (
+            <div
+              key={label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "4px 8px",
+                borderRadius: 20,
+                background: isDone
+                  ? "rgba(77,232,255,0.08)"
+                  : isCurrent
+                    ? "rgba(77,232,255,0.12)"
+                    : "rgba(10,20,40,0.8)",
+                border: isDone
+                  ? "1px solid #4de8ff44"
+                  : isCurrent
+                    ? "1px solid #4de8ff"
+                    : "1px solid #1a2a3a",
+                animation: isCurrent ? "sphere-pulse 1.5s ease-in-out infinite" : "none",
+              }}
+            >
+              <span style={{
+                fontSize: 9,
+                color: isCurrent || isDone ? "#4de8ff" : "#2a3a4a",
+                fontFamily: "monospace",
+                fontWeight: isCurrent ? 700 : 400,
+              }}>
+                {isDone ? "✓ " : `${i + 1}. `}{label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (

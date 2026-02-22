@@ -7,6 +7,7 @@ interface DialogueBoxProps {
   currentIndex: number;
   onAdvance: () => void;
   visible: boolean;
+  inline?: boolean;
 }
 
 export function DialogueBox({
@@ -14,6 +15,7 @@ export function DialogueBox({
   currentIndex,
   onAdvance,
   visible,
+  inline = false,
 }: DialogueBoxProps) {
   const [charIndex, setCharIndex] = useState(0);
   const msg = messages[currentIndex];
@@ -45,7 +47,14 @@ export function DialogueBox({
   return (
     <div
       onClick={handleClick}
-      style={{
+      style={inline ? {
+        position: "relative",
+        width: "100%",
+        marginTop: 8,
+        cursor: "pointer",
+        userSelect: "none",
+        boxSizing: "border-box",
+      } : {
         position: "absolute",
         bottom: 16,
         left: 16,
